@@ -22,13 +22,50 @@ _jogadores = []
 
 client = commands.Bot(command_prefix = "+")
 
-#@client.event
-#async def on_message(message):
-#  if message.author == client.user:
-#    return
+def db_user(nick, id):
+  return f"[{nick}]{id}"
 
-  
-  #if str(message.content).find('@')
+def xingamento_aleatorio():
+  lista = ['Vai se lascar','Você é um @bado', 'Eww tosco', 'Foda-se', 'Quem? Pergutou?']
+  return random.choice(lista)
+
+async def mostrar_perfil(ctx):
+  user = ctx.message.author
+  #informação sobre o user [no db]
+  u = db[db_user(user.name,user.id)]
+
+  e = discord.Embed(title=f"Perfil de {u['nome']}",description="Status:\n"
+              f"- Energia: {u['energia']}\n"
+              f"- Razos: {u['coins']}\n")
+  e.set_thumbnail(url=user.avatar_url)
+  await ctx.message.channel.send(embed=e)
+
+@client.event
+async def on_message_delete(message):
+  await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
+
+@client.event
+async def on_reaction_add(reaction, user):
+  msg = reaction.message
+  channel = msg.channel
+  #CRIAÇÃO DE PERFIL
+  if user == msg_user and msg_id == msg.id:
+    if reaction.emoji == "❌":
+
+      await msg.channel.send(xingamento_aleatorio())
+
+    elif reaction.emoji == "👌":
+      database_id = db_user(user.name,user.id)
+
+      db[database_id] = {
+        "id":user.id,
+        "coins":100,
+        "energia":100,
+        "nome":user.name
+      }
+
+      if database_id in db:
+        await channel.send(f"{user.mention} você se registrou com sucesso!")
 
 def google_search(search_term, **kwargs):
     apikey = os.getenv("GKEY")
@@ -92,11 +129,9 @@ async def meme(ctx, arg1):
   print(len(items))
 
   #await ctx.send(f"Resultados: {len(items)}")
-  await ctx.send(embed=e)
-
-@client.event
-async def on_message_delete(message):
-  await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
+  msg = await ctx.send(embed=e)
+  await msg.add_reaction("💖")
+  await msg.add_reaction("💔")
 
 @client.command(brief="Toca ou manda um gif do meme El muchacho!", description="Se você estiver em um canal de voz, o bot mandará um gif e tocará a música, se você não estiver em um canal ele mandará um vídeo da música no chat.")
 async def ojostristes(ctx, arg1=None):
@@ -310,42 +345,47 @@ async def jogadores(ctx):
 
   mensagem = await ctx.send(embed=embed)
 
-@client.event
-async def on_reaction_add(reaction, user):
-  msg = reaction.message
-  channel = msg.channel
-  await client.send_message(channel, "teste")
-
 @client.command(brief="Minerar para ganhar pontos de servidor.", description="")
 async def minerar(ctx):
   pass
 
-def db_user(nick, id):
-  return f"[{nick}]{id}"
+@client.command()
+async def del_db(ctx):
+  if ctx.message.author.id == 263433841887150091:
+    for k in db.keys():
+      del db[f"{k}"]
+      await ctx.send(f"Key {k} foi deletada")
+  else:
+    await ctx.send("Você não tem permissão para usar esse comando...")  
 
 @client.command(brief="Criar ou visualiza seu perfil no servidor")
 async def perfil(ctx):
   author = ctx.message.author.mention
   name = ctx.message.author.name
-  user = db_user(name,author)
+  user = db_user(name,ctx.message.author.id)
 
   if not user in db:
     print(f"{author} usou o comando '+perfil', mas não possui uma conta'")
 
-    e = discord.Embed(title=f"{author} não possui uma conta!", description="Selecione uma opção."
-                         "- Criar uma conta ⚡️"
-                         "- Cancelar 🙅🏽‍♂️",
+    e = discord.Embed(title=f"{name} não possui uma conta!", description="Selecione uma opção.\n"
+                         "- Criar uma conta 👌\n"
+                         "- Cancelar ❌",
     color=0xff5e00)
 
-    msg = await ctx.send(f"{author} usou o comando '+perfil', mas não possui uma conta")
+    await ctx.send(f"{author} usou o comando '+perfil', mas não possui uma conta")
 
-    await msg.add_reaction("⚡️")
-    await msg.add_reaction("🙅🏽‍♂️")
+    msg = await ctx.send(embed=e)
+
+    await msg.add_reaction("👌")
+    await msg.add_reaction("❌")
 
     global msg_id
     msg_id = msg.id
     global msg_user
     msg_user = ctx.message.author
+
+  else:
+    await mostrar_perfil(ctx)
 
 client.loop.create_task(entrou())
 keep_alive()
