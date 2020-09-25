@@ -56,7 +56,7 @@ async def get_jogadores_online():
 
   return jogadores
 
-@client.command()
+@client.command(brief="Manda um bom dia aleatório")
 async def bomdia(ctx):
   links=["https://i.ibb.co/g3GRS9q/image.png","https://i.ibb.co/dD0f46C/image.png","https://i.ibb.co/TL3j6WM/image.png","https://i.ibb.co/5T3Ww3F/image.png","https://i.ibb.co/SP8XSxs/image.png"]
 
@@ -64,7 +64,7 @@ async def bomdia(ctx):
   e.set_image(url=random.choice(links))
   await ctx.send(embed = e)
 
-@client.command()
+@client.command(brief="Miado no canal de voz.", description="Você precisa estar em um canal de voz para utilizar este comando.")
 async def peu(ctx: commands.Context):
   channel = ctx.message.author.voice.channel
 
@@ -79,7 +79,7 @@ async def peu(ctx: commands.Context):
   await asyncio.sleep(3)
   await vc.disconnect()
 
-@client.command()
+@client.command(brief="Manda um meme de um termo.",description="Uso do comando: +meme \"plavra para pesquisar\"")
 async def meme(ctx, arg1):
   g = google_search("meme "+str(arg1).replace("\"", ""), searchType="image")
   print("=========================")
@@ -94,7 +94,11 @@ async def meme(ctx, arg1):
   #await ctx.send(f"Resultados: {len(items)}")
   await ctx.send(embed=e)
 
-@client.command()
+@client.event
+async def on_message_delete(message):
+  await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
+
+@client.command(brief="Toca ou manda um gif do meme El muchacho!", description="Se você estiver em um canal de voz, o bot mandará um gif e tocará a música, se você não estiver em um canal ele mandará um vídeo da música no chat.")
 async def ojostristes(ctx, arg1=None):
   is_voice = True
   channel = None
@@ -123,7 +127,7 @@ async def ojostristes(ctx, arg1=None):
     f = open(r"sad-cat-song.mp4",'rb')
     await txt_channel.send(file=File(f),content=f"{aut} EL MUCHACHO DE LOS OJOS TRISTES")
 
-@client.command()
+@client.command(brief="Toca a música 'Alôôô galera de Cowboy'", description="Para usar esse comando, é necessário que você esteja em um canal de voz.")
 async def alo(ctx):
   channel = ctx.message.author.voice.channel
 
@@ -138,7 +142,7 @@ async def alo(ctx):
     await ctx.send("Você não está em um canal de voz")
 
 
-@client.command()
+@client.command(brief="Chama um usuário de JojoFag", description="Uso do comando: +jojofag @usuario que é um jojofag.")
 async def jojofag(ctx, arg1):
   t = int(str(arg1).replace("@","").replace("<","").replace(">","").replace("!",""))
   print(t)
@@ -156,7 +160,7 @@ async def jojofag(ctx, arg1):
 
   mensagem = await ctx.send(embed=embed)
 
-@client.command()
+@client.command(brief="A mimir.. zzzzz", description="Manda uma mensagem de 'a mimir' e se você estiver em um canal de voz, toca um aúdio 'a mimir'.")
 async def mimir(ctx):
   mention = ctx.message.author.mention
   nome = ctx.message.author.name
@@ -181,7 +185,7 @@ async def mimir(ctx):
     await asyncio.sleep(4)
     await vc.disconnect()
 
-@client.command()
+@client.command(brief="'Já dizia Aristóteles...'",description="Escreve uma frase aleatória.")
 async def aristoteles(ctx):
   frases = ['Nunca diga nunca!', 'Você nunca saberá se és capaz se nunca tentar, ai tu tentas e vês que não é capaz mesmo.', 'Bora minerar galera.', 'Nunca desista de algo que você começou, desista antes de começar.', 'R.I.P Perolinha, Assassino: Reiziz', 'Suicidio é a opção :D']
   await ctx.send(random.choice(frases))
@@ -197,17 +201,17 @@ def get_channel_id(nome):
   #print(text_channel_list)
   return text_channel_ids[text_channel_list.index(nome)]
 
-@client.command()
+@client.command(brief="Brincadeira do quinto ano...", description="Não tenho nem como te explicar esse comando...")
 async def ei(ctx):
   await ctx.send('Eu disse ei não disse olha! kk')
 
 
-@client.command()
+@client.command(brief="Se você me xingar, eu xingo de volta!")
 async def puta(ctx):
   pl = ctx.message.author.mention
   await ctx.send(pl+' Puta é você, seu merda :3')
 
-@client.command()
+@client.command(brief="Chama um usuário de gostoso(a)", description="Uso do comando: +gostoso @usuário")
 async def gostoso(ctx, arg1):
   lista=["😳","🥰","🤩","🥵","😍"]
   pl = ctx.message.author.mention
@@ -221,7 +225,7 @@ async def on_ready():
     db["jogadores"] = ['ReizizII','JoJoke','ordeph','carollis'] 
     print("setei os jogadores")
 
-@client.command()
+@client.command(brief="Mostra os status do servidor de MC (online/offline).")
 async def server(ctx):
   url = 'https://caudaderaposa.aternos.me'
   r = requests.get(url, allow_redirects=True)
@@ -231,7 +235,7 @@ async def server(ctx):
   mes = "> Status do servidor?\n"+"O servidor está "+status
   await ctx.send(mes)
 
-@client.command()
+@client.command(brief="Comando ainda em desenvolvimento...")
 async def painel(ctx):
   embed = discord.Embed(
     title="Painel de controle",
@@ -283,13 +287,13 @@ async def entrou():
     await asyncio.sleep(2)
   
 
-@client.command(pass_context=True)
+@client.command(pass_context=True, brief="Comando inútil, apenas ferramenta de teste para o desenvolvedor - Rei.")
 async def teste(ctx):
   await ctx.send("teste!")
   #await print(client.get_channel(6))
   await client.get_channel(get_channel_id("bots")).send("outro teste!")
 
-@client.command()
+@client.command(brief="Mostra os jogadores online no servidor de MC.")
 async def jogadores(ctx):
   jogadores = ""
 
@@ -311,6 +315,37 @@ async def on_reaction_add(reaction, user):
   msg = reaction.message
   channel = msg.channel
   await client.send_message(channel, "teste")
+
+@client.command(brief="Minerar para ganhar pontos de servidor.", description="")
+async def minerar(ctx):
+  pass
+
+def db_user(nick, id):
+  return f"[{nick}]{id}"
+
+@client.command(brief="Criar ou visualiza seu perfil no servidor")
+async def perfil(ctx):
+  author = ctx.message.author.mention
+  name = ctx.message.author.name
+  user = db_user(name,author)
+
+  if not user in db:
+    print(f"{author} usou o comando '+perfil', mas não possui uma conta'")
+
+    e = discord.Embed(title=f"{author} não possui uma conta!", description="Selecione uma opção."
+                         "- Criar uma conta ⚡️"
+                         "- Cancelar 🙅🏽‍♂️",
+    color=0xff5e00)
+
+    msg = await ctx.send(f"{author} usou o comando '+perfil', mas não possui uma conta")
+
+    await msg.add_reaction("⚡️")
+    await msg.add_reaction("🙅🏽‍♂️")
+
+    global msg_id
+    msg_id = msg.id
+    global msg_user
+    msg_user = ctx.message.author
 
 client.loop.create_task(entrou())
 keep_alive()
