@@ -22,6 +22,16 @@ _jogadores = []
 
 client = commands.Bot(command_prefix = "+")
 
+def set_global(at, msgid):
+  global msg_id
+  msg_id = msgid
+  global msg_user
+  msg_user = at
+
+#trata uma menção de um user e retorna apenas o seu id
+def tratar_mencao(mencao):
+  return int(str(mencao).replace("@","").replace("<","").replace(">","").replace("!",""))
+
 def db_user(nick, id):
   return f"[{nick}]{id}"
 
@@ -35,8 +45,8 @@ async def mostrar_perfil(ctx):
   u = db[db_user(user.name,user.id)]
 
   e = discord.Embed(title=f"Perfil de {u['nome']}",description="Status:\n"
-              f"- Energia: {u['energia']}\n"
-              f"- Razos: {u['coins']}\n")
+              f"- Reputação: {u['reputacao']}\n"
+              f"- {u['frase']}\n")
   e.set_thumbnail(url=user.avatar_url)
   await ctx.message.channel.send(embed=e)
 
@@ -59,8 +69,8 @@ async def on_reaction_add(reaction, user):
 
       db[database_id] = {
         "id":user.id,
-        "coins":100,
-        "energia":100,
+        "reputacao":0,
+        "frase":"Este user ainda não definiu uma frase : (",
         "nome":user.name
       }
 
@@ -164,9 +174,13 @@ async def ojostristes(ctx, arg1=None):
 
 @client.command(brief="Toca a música 'Alôôô galera de Cowboy'", description="Para usar esse comando, é necessário que você esteja em um canal de voz.")
 async def alo(ctx):
-  channel = ctx.message.author.voice.channel
+  channel = None
+  try:
+    channel = ctx.message.author.voice.channel
+  except:
+    pass
 
-  if channel != "":
+  if channel != None:
     await ctx.send(f"ALOOOO [...] :3 - \"{channel}\"")
     global vc
     vc = await channel.connect()
@@ -174,13 +188,15 @@ async def alo(ctx):
     await asyncio.sleep(13)
     await vc.disconnect()
   else:
-    await ctx.send("Você não está em um canal de voz")
+    #await ctx.send("Você não está em um canal de voz")
+    e = discord.Embed(title="Alooooo?")
+    e.set_image(url="https://i.ibb.co/9cnXKqy/cowboy-Alo.png")
+    await ctx.send(embed=e)
 
 
 @client.command(brief="Chama um usuário de JojoFag", description="Uso do comando: +jojofag @usuario que é um jojofag.")
-async def jojofag(ctx, arg1):
-  t = int(str(arg1).replace("@","").replace("<","").replace(">","").replace("!",""))
-  print(t)
+async def jojofag(ctx, membro):
+  t = tratar_mencao(membro)
   nome = ctx.guild.get_member(t).name
 
   mention = ctx.message.author.mention
@@ -188,7 +204,7 @@ async def jojofag(ctx, arg1):
   embed = discord.Embed(
     title="🥳 "+nome+" é agora um JojoFag 🥰",
     color=0xff5e00,
-    description=mention+" condenou "+arg1+" como um novo JojoFag. Sem bullying pessoal, nesse servidor respeitamos a diversidade! :3",
+    description=mention+" condenou "+membro+" como um novo JojoFag. Sem bullying pessoal, nesse servidor respeitamos a diversidade! :3",
   )
 
   embed.set_thumbnail(url='https://i.ibb.co/BtJYcv5/jojofag.jpg')
@@ -210,9 +226,14 @@ async def mimir(ctx):
 
   mensagem = await ctx.send(embed=embed)
 
-  channel = ctx.message.author.voice.channel
+  channel = None
 
-  if channel:
+  try:
+    channel = ctx.message.author.voice.channel
+  except:
+    pass
+
+  if channel != None:
     await ctx.send(f"mimindo no canal \"{channel}\"")
     global vc
     vc = await channel.connect()
@@ -259,6 +280,9 @@ async def on_ready():
   if not "jogadores" in db:
     db["jogadores"] = ['ReizizII','JoJoke','ordeph','carollis'] 
     print("setei os jogadores")
+  
+  x = db_user("Reiziz",'263433841887150091')
+  print(db[x])
 
 @client.command(brief="Mostra os status do servidor de MC (online/offline).")
 async def server(ctx):
@@ -386,6 +410,47 @@ async def perfil(ctx):
 
   else:
     await mostrar_perfil(ctx)
+
+@client.command(brief="Você pode dar reputação a outro membro")
+async def reputacao(ctx, membro):
+  autor = ctx.message.author
+  honrado = ctx.guild.get_member(tratar_mencao(membro))
+  db_id = db_user(honrado.name, honrado.id)
+  data = None
+
+  if db_id in db:
+    data = db[db_id]
+
+  if honrado.id == autor.id:
+    await ctx.send("Você não pode dar reputação para você mesmo!")
+    return
+
+  if db_id in db:
+
+    e = discord.Embed(title=f"{autor.name} presenteou {honrado.name} com reputação")
+    e.set_thumbnail(url=honrado.avatar_url)
+    await ctx.send(embed=e)
+    data["reputacao"] += 1
+    print("aumentei a rep")
+    #print(f"{honrado.name} agora tem {db[db_id]["reputacao"]} de reputacao")
+
+    db[db_id] = data
+
+  else:
+    await ctx.send(f"O membro {membro} ainda não possui um perfil cadastrado! (use +perfil para criar um)")
+
+@client.command()
+async def frase(ctx, frase):
+  autor = ctx.message.author
+  db_id = db_user(autor.name,autor.id)
+  if db_id in db:
+    data = db[db_id]
+    data["frase"] = str(frase).replace("\"","")
+    db[db_id] = data
+    await ctx.send(f"{autor.mention} Pronto! Agora sua frase foi modificada.")
+  else:
+    await ctx.send("Você precisa de uma conta para setar uma frase de perfil! (use o comando +perfil para criar um)")
+
 
 client.loop.create_task(entrou())
 keep_alive()
