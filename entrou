@@ -1,0 +1,48 @@
+#Alguém entrou ou saiu do server
+async def entrou():
+
+  global last_estado_servidor
+
+  await asyncio.sleep(2)
+  global _jogadores
+  while True:
+    #*************************
+    players:list = await get_jogadores_online()
+
+    server_status = await get_server_status()
+
+    if server_status != last_estado_servidor:
+      last_estado_servidor = server_status
+      client.invoke(client.get_command("server"))
+    
+    print(f"Lista nova [{len(players)}]:")
+    print(players)
+    print("------")
+    print(f"Lista velha [{len(_jogadores)}]:")
+    print(_jogadores)
+
+    if len(players) < len(_jogadores):
+      for j in players:
+        print(f"removendo {j} da lista antiga")
+        _dummy = _jogadores
+        _dummy.remove(j)
+
+      for resto in _dummy:
+        print(resto+" saiu")
+        await mensagem("admin", f"Jogador {resto} saiu do servidor!")
+    
+    elif len(players) > len(_jogadores):
+
+      _dummy = players
+
+      for j in _jogadores:
+        print(f"removendo {j} da lista dummy")
+        _dummy.remove(j)
+
+      for resto in _dummy:
+        print(f"{resto} entrou")
+        await mensagem("admin", f"Jogador {resto} entrou no servidor!")
+
+    _jogadores = players
+    await asyncio.sleep(2)
+  

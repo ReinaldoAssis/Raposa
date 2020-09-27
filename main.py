@@ -13,10 +13,17 @@ from googleapiclient.discovery import build
 msg_id = None
 msg_user = None
 
+#último estado do servidor
+last_estado_servidor = False
+
+#link dos memes recentes
+memes_recentes = []
+
 #voice client
 vc = None
 
-_jogadores = []
+#lista de jogadores online no server de MC
+familia = []
 
 #discord.opus.load_opus("./libopus.so.0.8.0")
 
@@ -27,6 +34,24 @@ def set_global(at, msgid):
   msg_id = msgid
   global msg_user
   msg_user = at
+
+def get_channel_id(nome):
+  text_channel_list = []
+  text_channel_ids = []
+  for guild in client.guilds:
+    for channel in guild.text_channels:
+      text_channel_ids.append(channel.id)
+      text_channel_list.append(channel.name)
+  
+  return text_channel_ids[text_channel_list.index(nome)]
+
+async def get_server_status():
+  url = 'https://caudaderaposa.aternos.me'
+  r = requests.get(url, allow_redirects=True)
+  soup = BeautifulSoup(r.content, 'lxml')
+  element = str(soup.find_all(class_='status-label')[0])
+  status = element[element.find('>')+1:element.find('</')]
+  return status
 
 #trata uma menção de um user e retorna apenas o seu id
 def tratar_mencao(mencao):
@@ -52,7 +77,40 @@ async def mostrar_perfil(ctx):
 
 @client.event
 async def on_message_delete(message):
-  await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
+  if message.author.id != client.user.id:
+    await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
+
+@client.event
+async def on_command_error(ctx, error):
+  x = str(error)
+  if "You are on cooldown" in x:
+    index = x.find("in")+2
+    await ctx.send(f"{ctx.message.author.mention} calma! Você está em cooldown para este comando. Tente novamente em {x[index:]}")
+
+
+@client.event
+async def on_message(message):
+  #se a mensagem não for na dm
+  if not message.channel.type == discord.ChannelType.private:
+    if message.author.id != client.user.id:
+      u = db_user(message.author.name, message.author.id) 
+      if u in db:
+        data = db[u]
+        if "xp" in data:
+          data["xp"] += 1
+        else:
+          data["xp"] = 1
+        db[u] = data
+
+        if "xp" in db[u]:
+          data = db[u]
+          if data["xp"] >= 10:
+            data["xp"] = 0
+            data["reputacao"] += 1
+            db[u] = data
+
+    await client.process_commands(message)
+
 
 @client.event
 async def on_reaction_add(reaction, user):
@@ -86,7 +144,8 @@ def google_search(search_term, **kwargs):
     return res
 
 async def mensagem(canal, txt):
-  await client.get_channel(get_channel_id(canal)).send(txt)
+  c = get_channel_id(canal)
+  await client.get_channel(c).send(txt)
 
 async def get_jogadores_online():
   url = 'https://caudaderaposa.aternos.me'
@@ -126,17 +185,28 @@ async def peu(ctx: commands.Context):
   await asyncio.sleep(3)
   await vc.disconnect()
 
-@client.command(brief="Manda um meme de um termo.",description="Uso do comando: +meme \"plavra para pesquisar\"")
+@client.command(brief="Manda um meme de um termo.",description="Uso do comando: +meme \"plavra para pesquisar\"", aliases=["m","memes"])
 async def meme(ctx, arg1):
   g = google_search("meme "+str(arg1).replace("\"", ""), searchType="image")
-  print("=========================")
   items = g["items"]
   index = random.randint(0,len(items)-1)
+
+  if len(memes_recentes) >= 4:
+    memes_recentes.pop(0)
+
+  #tentativas de pegar um meme diferente
+  i = 0
+
+  while items[index]["link"] in memes_recentes:
+    index = random.randint(0,len(items)-1)
+    i+=1
+    if 1 >= 10:
+      break
 
   e = discord.Embed(title=items[index]["title"], description=f"Resultados: {len(items)}")
   e.set_image(url=items[index]["link"])
 
-  print(len(items))
+  memes_recentes.append(items[index]["link"])
 
   #await ctx.send(f"Resultados: {len(items)}")
   msg = await ctx.send(embed=e)
@@ -173,12 +243,14 @@ async def ojostristes(ctx, arg1=None):
     await txt_channel.send(file=File(f),content=f"{aut} EL MUCHACHO DE LOS OJOS TRISTES")
 
 @client.command(brief="Toca a música 'Alôôô galera de Cowboy'", description="Para usar esse comando, é necessário que você esteja em um canal de voz.")
-async def alo(ctx):
+async def alo(ctx, modo):
   channel = None
   try:
     channel = ctx.message.author.voice.channel
   except:
     pass
+  
+ # if modo == 
 
   if channel != None:
     await ctx.send(f"ALOOOO [...] :3 - \"{channel}\"")
@@ -246,16 +318,7 @@ async def aristoteles(ctx):
   frases = ['Nunca diga nunca!', 'Você nunca saberá se és capaz se nunca tentar, ai tu tentas e vês que não é capaz mesmo.', 'Bora minerar galera.', 'Nunca desista de algo que você começou, desista antes de começar.', 'R.I.P Perolinha, Assassino: Reiziz', 'Suicidio é a opção :D']
   await ctx.send(random.choice(frases))
 
-def get_channel_id(nome):
-  text_channel_list = []
-  text_channel_ids = []
-  for guild in client.guilds:
-    for channel in guild.text_channels:
-      text_channel_ids.append(channel.id)
-      text_channel_list.append(channel.name)
-
   #print(text_channel_list)
-  return text_channel_ids[text_channel_list.index(nome)]
 
 @client.command(brief="Brincadeira do quinto ano...", description="Não tenho nem como te explicar esse comando...")
 async def ei(ctx):
@@ -278,19 +341,18 @@ async def on_ready():
   await client.change_presence(activity=discord.Game(name="Criado por Reinaldo Assis"))
   print(client.user.name)
   if not "jogadores" in db:
-    db["jogadores"] = ['ReizizII','JoJoke','ordeph','carollis'] 
+    db["jogadores"] = ['ReizizII','JoJoke','ordeph','carollis',"rbneto"] 
     print("setei os jogadores")
   
-  x = db_user("Reiziz",'263433841887150091')
-  print(db[x])
+  global familia
+  familia = await get_jogadores_online()
+
+  #x = db_user("Reiziz",'263433841887150091')
+  #print(db[x])
 
 @client.command(brief="Mostra os status do servidor de MC (online/offline).")
 async def server(ctx):
-  url = 'https://caudaderaposa.aternos.me'
-  r = requests.get(url, allow_redirects=True)
-  soup = BeautifulSoup(r.content, 'lxml')
-  element = str(soup.find_all(class_='status-label')[0])
-  status = element[element.find('>')+1:element.find('</')]
+  status = await get_server_status()
   mes = "> Status do servidor?\n"+"O servidor está "+status
   await ctx.send(mes)
 
@@ -314,37 +376,7 @@ async def painel(ctx):
   global msg_user
   msg_user = mensagem.author
   
-#Alguém entrou ou saiu do server
-async def entrou():
-  await asyncio.sleep(2)
-  global _jogadores
-  while True:
-    #*************************
-    players:list = await get_jogadores_online()
-    
-    #print(players)
-    #print("------")
-    #print(_jogadores)
 
-    if len(players) < len(_jogadores):
-      for j in players:
-        _jogadores.remove(j)
-
-      for resto in _jogadores:
-        print(resto+" saiu")
-        await mensagem("geral", f"Jogador {resto} saiu do servidor!")
-    
-    elif len(players) > len(_jogadores):
-      for j in _jogadores:
-        players.remove(j)
-
-      for resto in players:
-        print(f"{resto} entrou")
-        await mensagem("geral", f"Jogador {resto} entrou no servidor!")
-
-    _jogadores = players
-    await asyncio.sleep(2)
-  
 
 @client.command(pass_context=True, brief="Comando inútil, apenas ferramenta de teste para o desenvolvedor - Rei.")
 async def teste(ctx):
@@ -411,6 +443,7 @@ async def perfil(ctx):
   else:
     await mostrar_perfil(ctx)
 
+@commands.cooldown(1, 60, commands.BucketType.user)
 @client.command(brief="Você pode dar reputação a outro membro")
 async def reputacao(ctx, membro):
   autor = ctx.message.author
@@ -431,9 +464,6 @@ async def reputacao(ctx, membro):
     e.set_thumbnail(url=honrado.avatar_url)
     await ctx.send(embed=e)
     data["reputacao"] += 1
-    print("aumentei a rep")
-    #print(f"{honrado.name} agora tem {db[db_id]["reputacao"]} de reputacao")
-
     db[db_id] = data
 
   else:
@@ -451,6 +481,52 @@ async def frase(ctx, frase):
   else:
     await ctx.send("Você precisa de uma conta para setar uma frase de perfil! (use o comando +perfil para criar um)")
 
+async def entrou():
+
+  global last_estado_servidor
+
+  await asyncio.sleep(4)
+  global familia
+  while True:
+    #*************************
+    players:list = await get_jogadores_online()
+
+    server_status = await get_server_status()
+
+    if server_status != last_estado_servidor:
+      last_estado_servidor = server_status
+      cmd = client.get_command("server")
+      await server()
+
+    #c = get_channel_id("geral")
+
+    if len(players) > len(familia):
+      
+      for p in players:
+        if not p in familia:
+          familia.append(p)
+          await mensagem("geral", f"{p} entrou no servidor!")
+    
+    if len(players) < len(familia):
+      for f in familia:
+        if not f in players:
+          familia.remove(f)
+          await mensagem("geral", f"{p} saiu no servidor!")
+        
+
+      
+    await asyncio.sleep(2)
+
+@client.command()
+async def limpar(ctx):
+  print("limpando mensagens")
+  msgs = await ctx.channel.history(limit=10).flatten()
+  i = 0
+  for msg in msgs:
+    if msg.author.id == client.user.id:
+      i+=1
+      await msg.delete()
+  await ctx.send(f"{i} mensagens limpadas")
 
 client.loop.create_task(entrou())
 keep_alive()
