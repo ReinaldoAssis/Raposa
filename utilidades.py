@@ -79,7 +79,7 @@ def xingamento_aleatorio():
   lista = ['Vai se lascar','Você é um @bado', 'Eww tosco', 'Foda-se', 'Quem? Pergutou?']
   return random.choice(lista)
 
-async def mostrar_perfil(ctx, target):
+async def mostrar_perfil(self, ctx, target):
   user = None
   if target == None:
     user = ctx.message.author
@@ -127,7 +127,7 @@ class Utilidades(commands.Cog):
       await message.channel.send(f"uma mensagem de {message.author.mention} foi apagada por...? 👀")
 
   @client.event
-  async def on_command_error(ctx, error):
+  async def on_command_error(self, ctx, error):
     x = str(error)
     if "You are on cooldown" in x:
       index = x.find("in")+2
@@ -197,13 +197,13 @@ class Utilidades(commands.Cog):
     #print(db[x])
 
   @commands.command(brief="Mostra os status do servidor de MC (online/offline).")
-  async def server(ctx):
+  async def server(self, ctx):
     status = await get_status_servidor()
     mes = "> Status do servidor?\n"+"O servidor está "+status
     await ctx.send(mes)
 
   @commands.command(brief="Comando ainda em desenvolvimento...")
-  async def painel(ctx):
+  async def painel(self, ctx):
     embed = discord.Embed(
       title="Painel de controle",
       color=0xff5e00,
@@ -231,7 +231,7 @@ class Utilidades(commands.Cog):
     await self.client.get_channel(get_channel_id("bots")).send("outro teste!")
 
   @commands.command(brief="Mostra os jogadores online no servidor de MC.")
-  async def jogadores(ctx):
+  async def jogadores(self, ctx):
     jogadores = ""
 
     lista = await get_jogadores_online()
@@ -248,11 +248,11 @@ class Utilidades(commands.Cog):
     mensagem = await ctx.send(embed=embed)
 
   @commands.command(brief="Minerar para ganhar pontos de servidor.", description="")
-  async def minerar(ctx):
+  async def minerar(self, ctx):
     pass
 
   @commands.command()
-  async def del_db(ctx):
+  async def del_db(self, ctx):
     if ctx.message.author.id == 263433841887150091:
       for k in db.keys():
         del db[f"{k}"]
@@ -260,7 +260,7 @@ class Utilidades(commands.Cog):
     else:
       await ctx.send("Você não tem permissão para usar esse comando...")  
   @commands.command()
-  async def del_user(ctx, user):
+  async def del_user(self, ctx, user):
     if ctx.message.author.id == 263433841887150091:
       t = ctx.guild.get_member(tratar_mencao(user))
       user = db_user(t.name, t.id)
@@ -269,12 +269,12 @@ class Utilidades(commands.Cog):
     else:
       await ctx.send("Você não tem permissão para usar esse comando...")  
   @commands.command()
-  async def set_db(ctx, *args):
+  async def set_db(self, ctx, *args):
     print(args[1])
 
 
   @commands.command(brief="Criar ou visualiza seu perfil no servidor", pass_context=True)
-  async def perfil(ctx, target=None):
+  async def perfil(self, ctx, target=None):
     author = ctx.message.author.mention
     name = ctx.message.author
     user = None
@@ -318,7 +318,7 @@ class Utilidades(commands.Cog):
 
   @commands.cooldown(1, 60, commands.BucketType.user)
   @commands.command(brief="Você pode dar reputação a outro membro")
-  async def reputacao(ctx, membro):
+  async def reputacao(self, ctx, membro):
     autor = ctx.message.author
     honrado = ctx.guild.get_member(tratar_mencao(membro))
     db_id = db_user(honrado.name, honrado.id)
@@ -345,7 +345,7 @@ class Utilidades(commands.Cog):
       await ctx.send(f"O membro {membro} ainda não possui um perfil cadastrado! (use +perfil para criar um)")
 
   @commands.command()
-  async def frase(ctx, *, frase):
+  async def frase(self, ctx, *, frase):
     autor = ctx.message.author
     db_id = db_user(autor.name,autor.id)
     if db_id in db:
@@ -404,7 +404,7 @@ class Utilidades(commands.Cog):
     await ctx.send(f"{i} mensagens limpadas")
 
   @commands.command(brief="Mostra os 5 usuários com mais reputação.")
-  async def ranque(ctx):
+  async def ranque(self, ctx):
     keys = list(db)
     users = list()
 
