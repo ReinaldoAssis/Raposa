@@ -10,6 +10,11 @@ from googleapiclient.discovery import build
 #link dos memes recentes
 memes_recentes = []
 
+#0 -> seriao
+#1 -> niggaigorzao
+#2 -> bigfat
+big_emoticons_urls = ["https://i.ibb.co/pjL2s8f/alt8.png","https://i.ibb.co/XFCfw0g/alt3.png","https://i.ibb.co/hmYCSrF/alt4.png"]
+
 #FUNÇÕEEEEEEEEEEEEEEEEEEEEEEEEEEEES
 
 def tratar_mencao(mencao):
@@ -199,3 +204,21 @@ class Brincadeiras(commands.Cog):
     lista=["😳","🥰","🤩","🥵","😍"]
     pl = ctx.message.author.mention
     await ctx.send(pl+" está chamando "+arg1+" de gostoso(a) "+ random.choice(lista))
+
+  @client.command(brief="seriao", description="seriao")
+  async def seriao(self, ctx):
+    e = discord.Embed()
+    e.set_image(url=big_emoticons_urls[0])
+    await ctx.send(embed = e)
+
+  @client.command(brief="niggaigorzao", description="niggaigorzao")
+  async def niggaigorzao(self, ctx):
+    e = discord.Embed()
+    e.set_image(url=big_emoticons_urls[1])
+    await ctx.send(embed = e)
+
+  @client.command(brief="bigfat", description="bigfat")
+  async def bigfat(self, ctx):
+    e = discord.Embed()
+    e.set_image(url=big_emoticons_urls[2])
+    await ctx.send(embed = e)
