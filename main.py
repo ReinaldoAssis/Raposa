@@ -17,6 +17,6 @@ from utilidades import Utilidades
 
 client.add_cog(Brincadeiras(client))
 client.add_cog(Utilidades(client))
-client.loop.create_task(Utilidades.entrou())
+# client.loop.create_task(Utilidades.entrou())
 keep_alive()
 client.run(os.getenv("DISCORD_TOKEN"))
