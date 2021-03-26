@@ -79,7 +79,7 @@ def xingamento_aleatorio():
   lista = ['Vai se lascar','Você é um @bado', 'Eww tosco', 'Foda-se', 'Quem? Pergutou?']
   return random.choice(lista)
 
-async def mostrar_perfil(self, ctx, target):
+async def mostrar_perfil(ctx, target):
   user = None
   if target == None:
     user = ctx.message.author
