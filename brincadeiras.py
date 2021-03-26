@@ -13,7 +13,14 @@ memes_recentes = []
 #0 -> seriao
 #1 -> niggaigorzao
 #2 -> bigfat
-big_emoticons_urls = ["https://i.ibb.co/pjL2s8f/alt8.png","https://i.ibb.co/XFCfw0g/alt3.png","https://i.ibb.co/hmYCSrF/alt4.png"]
+#3 -> chadao
+#4 -> demoniao/deminiozao
+big_emoticons_urls = ["https://i.ibb.co/pjL2s8f/alt8.png","https://i.ibb.co/XFCfw0g/alt3.png","https://i.ibb.co/hmYCSrF/alt4.png",
+"https://i.ibb.co/DY6qYb2/image2.jpg",
+"https://i.ibb.co/n0hwDYg/demonio.png"]
+
+#custom emoticons podem ser criados pelo bot em si no discord e n precisam ser hardcoded db[emoji_{nome}] = link
+
 
 #FUNÇÕEEEEEEEEEEEEEEEEEEEEEEEEEEEES
 
@@ -221,4 +228,43 @@ class Brincadeiras(commands.Cog):
   async def bigfat(self, ctx):
     e = discord.Embed()
     e.set_image(url=big_emoticons_urls[2])
+    await ctx.send(embed = e)
+
+  @client.command(brief="chadao", description="chadao")
+  async def chadao(self, ctx):
+    e = discord.Embed()
+    e.set_image(url=big_emoticons_urls[3])
+    await ctx.send(embed = e)
+  
+  @client.command(brief="demoniao", description="demoniao", aliases=["demoniozao"])
+  async def demoniao(self, ctx):
+    e = discord.Embed()
+    e.set_image(url=big_emoticons_urls[4])
+    await ctx.send(embed = e)
+
+  @client.command(brief="Manda um bom dia aleatório", aliases=["boa noite"])
+  async def boanoite(self, ctx):
+    links=["https://i.pinimg.com/236x/98/8c/5c/988c5cd820bd11bb29466c5ee60490ab.jpg","https://i.pinimg.com/236x/46/16/cc/4616ccdb2cbbbcba9a18548d233d364b.jpg","https://i.pinimg.com/736x/1a/89/82/1a8982bc09a96824c6beacad9e825585.jpg","https://i.pinimg.com/236x/32/4a/51/324a51ea3855a7632b8f491987bdb6af.jpg","https://images7.memedroid.com/images/UPLOADED961/5c96ed240bb55.jpeg","https://i.pinimg.com/736x/f2/a0/f4/f2a0f41e7836c8f71f18b66ce4c22440.jpg"]
+
+    e = discord.Embed()
+    e.set_image(url=random.choice(links))
+    await ctx.send(embed = e)
+
+  @client.command(brief="adcionar novos emojis", description="permite adicionar novos emojis grandes", aliases=["adde"])
+  async def addemoji(self, ctx, *, arg1):
+    spl = arg1.split("|")
+    _nome = spl[0]
+    _img = spl[1]
+
+    db["emoji_"+_nome] = _img #salva no banco de dados
+
+    e = discord.Embed()
+    e.set_image(url=_img)
+    e.description = "Emoji adicionado! Divirtam-se! :D"
+    await ctx.send(embed = e)
+    
+  @client.command(brief="emojis customizados", description="usa um emoji customizado", aliases=["e","emoticon","emote"])
+  async def emoji(self, ctx, *, arg1):
+    e = discord.Embed()
+    e.set_image(url=db["emoji_"+arg1])
     await ctx.send(embed = e)
